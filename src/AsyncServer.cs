@@ -6,6 +6,7 @@ using System.Text;
 public class AsyncServer
 {
     TcpListener listener;
+    RedisRequestParser parser = new RedisRequestParser();
 
     public void Start()
     {
@@ -55,8 +56,7 @@ public class AsyncServer
 
     private String GetResponse(string message)
     {
-        RedisRequestParser parser = new RedisRequestParser(message);
-        return parser.Parse();
+        return this.parser.Parse(message);
     }
 
     private async Task<string> GetRequest(NetworkStream stream)
