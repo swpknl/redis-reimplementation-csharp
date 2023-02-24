@@ -2,11 +2,13 @@ using System.Text;
 
 public class RedisRequestParser
 {
-    string message;
+    private readonly string message;
+    private readonly RedisCache cache;
 
     public RedisRequestParser(string message)
     {
         this.message = message;
+        this.cache = new RedisCache();
     }
 
     public string Parse()
@@ -42,6 +44,12 @@ public class RedisRequestParser
                 break;
             case "echo":
                 result = data[index + 3];
+                break;
+            case "set":
+                this.cache.Set("", "");
+                break;
+            case "get":
+                result = this.cache.Get("");
                 break;
             default: 
                 result = "PONG";
