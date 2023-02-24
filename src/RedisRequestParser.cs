@@ -13,7 +13,7 @@ public class RedisRequestParser
     {
         List<string> result = new List<string>();
         var data = message.TrimEnd().Split("\r\n");
-        // data.ToList().ForEach(x => Console.Write(x));
+        data.ToList().ForEach(x => Console.Write(x));
         for (int i = 1; i < data.Length; i += 2)
         {
             var inp = data[i].Replace("$", string.Empty).Trim();
