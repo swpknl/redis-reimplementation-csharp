@@ -6,8 +6,6 @@ using System.Text;
 public class AsyncServer
 {
     TcpListener listener;
-    ConcurrentDictionary<Socket, NetworkStream> map =
-        new ConcurrentDictionary<Socket, NetworkStream>();
 
     public void Start()
     {
@@ -16,23 +14,23 @@ public class AsyncServer
         this.StartEventLoop();
     }
 
-    private void StartEventLoop()
-    {
-        while (true)
-        {
-            this.listener.BeginAcceptSocket(AcceptSocket, null);
-        }
-    }
-
-    private async void AcceptSocket(IAsyncResult result)
+    private async void ProcessQueue(IAsyncResult result)
     {
         var socket = this.listener.EndAcceptSocket(result);
         var stream = new NetworkStream(socket);
-        while (stream.CanRead)
+        while (socket.Connected && stream.CanRead)
         {
             var request = await this.GetRequest(stream);
             var response = this.Process(request);
             await this.SendResponse(response, stream);
+        }
+    }
+
+    private void StartEventLoop()
+    {
+        while (true)
+        {
+            this.listener.BeginAcceptSocket(ProcessQueue, null);
         }
     }
 
@@ -57,8 +55,8 @@ public class AsyncServer
 
     private String GetResponse(string message)
     {
-        // TODO: Write Parser for Redis request
-        return "+PONG\r\n";
+        RedisRequestParser parser = new RedisRequestParser(message);
+        return parser.Parse();
     }
 
     private async Task<string> GetRequest(NetworkStream stream)
