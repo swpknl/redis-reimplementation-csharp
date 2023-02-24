@@ -18,10 +18,7 @@ public class RedisRequestParser
         {
             command.Add(commands[i].Trim().Substring(1).Trim());
         }
-        foreach (var item in command)
-        {
-            Console.Write(item + " ");
-        }
+        
         result.Add(this.GetCommandResponse(command[1], command));
         return String.Join("\r\n", result);
     }
@@ -43,7 +40,6 @@ public class RedisRequestParser
                 break;
             case "get":
                 return this.cache.Get(data[2]);
-                break;
         }
 
         return $"+{result}\r\n";
