@@ -12,28 +12,21 @@ public class RedisRequestParser
     public string Parse(string message)
     {
         List<string> result = new List<string>();
-        var data = message.TrimEnd().Split("\r\n");
-        data.ToList().ForEach(x => Console.Write(x));
-        for (int i = 1; i < data.Length; i += 2)
+        List<string> command = new List<string>();
+        var commands = message.Split("$");
+        for(int i = 0; i < commands.Length; i++) 
         {
-            var inp = data[i].Replace("$", string.Empty).Trim();
-            var length = int.Parse(inp);
-
-            if (length < 0)
-            {
-                result.Add("nil");
-            }
-            else
-            {
-                var command = data[i + 1];
-                result.Add(this.GetCommandResponse(command, data, ref i));
-            }
+            command.Add(commands[i].Trim().Substring(1).Trim());
         }
-
+        foreach (var item in command)
+        {
+            Console.Write(item + " ");
+        }
+        result.Add(this.GetCommandResponse(command[1], command));
         return String.Join("\r\n", result);
     }
 
-    private string GetCommandResponse(string command, string[] data, ref int index)
+    private string GetCommandResponse(string command, List<string> data)
     {
         string result = null;
         switch(command)
@@ -42,22 +35,30 @@ public class RedisRequestParser
                 result = "PONG";
                 break;
             case "echo":
-                result = data[index + 3];
+                result = data[2];
                 break;
             case "set":
-                this.cache.Set(data[index + 3], data[index + 5]);
-                index += 5;
+                this.cache.Set(data[2], data[3], this.GetTtl(data));
                 result = "OK";
                 break;
             case "get":
-                result = this.cache.Get(data[index + 3]);
-                index += 3;
-                break;
-            default: 
-                result = "PONG";
+                return this.cache.Get(data[2]);
                 break;
         }
 
         return $"+{result}\r\n";
+    }
+
+    private int? GetTtl(List<string> data)
+    {
+        if(data.Contains("px"))
+        {
+            int index = data.IndexOf("px");
+            return int.Parse(data[index + 1]);
+        }
+        else
+        {
+            return null;
+        }
     }
 }
